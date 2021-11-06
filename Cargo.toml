@@ -1,0 +1,45 @@
+[package]
+authors = ["Sami J. Mäkinen <sjm@iki.fi>"]
+edition = "2021"
+readme = "README.md"
+name = "arm-koe2"
+version = "0.1.0"
+
+[features]
+default = ["nucleo_f411"]
+# default = ["blue_pill"]
+blue_pill = ["stm32f1xx-hal"]
+nucleo_f411 = ["stm32f4xx-hal"]
+
+[dependencies.stm32f1xx-hal]
+optional = true
+version = "0"
+features = ["rt", "stm32f103"]
+
+[dependencies.stm32f4xx-hal]
+optional = true
+version = "0"
+features = ["rt", "stm32f411"]
+
+[dependencies]
+cortex-m = "0"
+cortex-m-rt = "0"
+cortex-m-semihosting = "0"
+embedded-hal = "0"
+nb = "1"
+panic-halt = "0"
+
+alloc-cortex-m = "0"
+
+
+# this lets you use `cargo fix`!
+[[bin]]
+name = "arm-koe2"
+test = false
+bench = false
+
+[profile.release]
+opt-level = 'z'
+codegen-units = 1 # better optimizations
+debug = true      # symbols are nice and they don't increase the size on Flash
+lto = true        # better optimizations
