@@ -35,7 +35,7 @@ fn main() -> ! {
     let mut delay;
     let mut led;
 
-    // On Nucleo stm32f411 User led LD2 is on PA5
+    // On Nucleo stm32f411 User led LD2 is on PA5, active high
     #[cfg(feature = "nucleo_f411")]
     {
         let pa = dp.GPIOA.split();
@@ -59,14 +59,13 @@ fn main() -> ! {
         let rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
 
-        // Setup PA5 as push-pull output
         led = pa.pa5.into_push_pull_output();
 
         // Create a delay abstraction based on SysTick
         delay = hal::delay::Delay::new(cp.SYST, &clocks);
     }
 
-    // On blue pill stm32f103 user led is on PC13
+    // On blue pill stm32f103 user led is on PC13, active low
     #[cfg(feature = "blue_pill")]
     {
         // Enable clock output MCO
@@ -90,7 +89,6 @@ fn main() -> ! {
             .sysclk(36.mhz())
             .freeze(&mut flash.acr);
 
-        // Setup PC13 as push-pull output
         led = pc.pc13.into_push_pull_output(&mut pc.crh);
 
         // Create a delay abstraction based on SysTick
