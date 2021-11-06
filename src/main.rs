@@ -11,17 +11,21 @@ use panic_halt as _;
 
 // https://www.st.com/en/microcontrollers-microprocessors/stm32f103.html
 #[cfg(feature = "blue_pill")]
+use embedded_hal::digital::v2::OutputPin;
+#[cfg(feature = "blue_pill")]
+use hal::gpio::{IOPinSpeed, OutputSpeed};
+#[cfg(feature = "blue_pill")]
 use stm32f1xx_hal as hal;
 
 // https://www.st.com/en/microcontrollers-microprocessors/stm32f411re.html
+#[cfg(feature = "nucleo_f411")]
+use crate::hal::gpio::Speed;
 #[cfg(feature = "nucleo_f411")]
 use stm32f4xx_hal as hal;
 
 use crate::hal::{pac, prelude::*};
 
 // This is needed only for stm32f103 hal
-#[cfg(feature = "blue_pill")]
-use embedded_hal::digital::v2::OutputPin;
 
 #[entry]
 fn main() -> ! {
@@ -34,52 +38,80 @@ fn main() -> ! {
     // On Nucleo stm32f411 User led LD2 is on PA5
     #[cfg(feature = "nucleo_f411")]
     {
-        let rcc = dp.RCC.constrain();
         let pa = dp.GPIOA.split();
-        let _pc = dp.GPIOC.split();
-
-        // TODO: enable clock outputs!
+        let pc = dp.GPIOC.split();
 
         // Clock outputs are as alt functions on MCO1=PA8, MCO2=PC9
-        // let _mco1 = pa.pa8.into_alternate::<AF1>().set_speed(Speed::VeryHigh);
-        // let _mco2 = pc.pc9.into_alternate::<AF1>().set_speed(Speed::VeryHigh);
+        let _mco1 = pa.pa8.into_alternate::<0>().set_speed(Speed::VeryHigh);
+        let _mco2 = pc.pc9.into_alternate::<0>().set_speed(Speed::VeryHigh);
+
+        // Enable clock outputs 1+2
+        // With 100MHz sysclk we should see 8/5 = 1.6 MHz on MCO1 and 100/5 = 20MHz on MCO2
+        dp.RCC.cfgr.modify(|_r, w| {
+            w.mco1pre().div5();
+            w.mco1().hsi();
+            w.mco2pre().div5();
+            w.mco2().sysclk();
+            w
+        });
 
         // Setup system clock to 100 MHz
+        let rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
+
+        // Setup PA5 as push-pull output
+        led = pa.pa5.into_push_pull_output();
 
         // Create a delay abstraction based on SysTick
         delay = hal::delay::Delay::new(cp.SYST, &clocks);
-
-        // Setup PA5 as push-pull output
-
-        led = pa.pa5.into_push_pull_output();
     }
 
     // On blue pill stm32f103 user led is on PC13
     #[cfg(feature = "blue_pill")]
     {
-        // Setup system clock to 72 MHz
+        // Enable clock output MCO
+        dp.RCC.cfgr.modify(|_r, w| w.mco().sysclk());
+
         let mut rcc = dp.RCC.constrain();
+        let mut pa = dp.GPIOA.split(&mut rcc.apb2);
         let mut pc = dp.GPIOC.split(&mut rcc.apb2);
+
+        // Clock outputs is alt function on MCO=PA8
+        let _mco = pa
+            .pa8
+            .into_alternate_push_pull(&mut pa.crh)
+            .set_speed(&mut pa.crh, IOPinSpeed::Mhz50);
+
+        // Setup system clocks
+        let mut flash = dp.FLASH.constrain();
+        let clocks = rcc
+            .cfgr
+            .use_hse(8.mhz())
+            .sysclk(36.mhz())
+            .freeze(&mut flash.acr);
 
         // Setup PC13 as push-pull output
         led = pc.pc13.into_push_pull_output(&mut pc.crh);
-
-        // Setup system clock to 72 MHz
-        let mut flash = dp.FLASH.constrain();
-        let clocks = rcc.cfgr.sysclk(72.mhz()).freeze(&mut flash.acr);
 
         // Create a delay abstraction based on SysTick
         delay = hal::delay::Delay::new(cp.SYST, clocks);
     }
 
     loop {
-        let _ = led.set_high();
+        // On blue pill, LED is on with output low
+        #[cfg(feature = "blue_pill")]
+        let _ = led.set_low();
+        #[cfg(feature = "nucleo_f411")]
+        led.set_high();
+
         delay.delay_ms(200_u32);
 
-        let _ = led.set_low();
-        delay.delay_ms(1300_u32);
+        #[cfg(feature = "blue_pill")]
+        let _ = led.set_high();
+        #[cfg(feature = "nucleo_f411")]
+        led.set_low();
+
+        delay.delay_ms(800_u32);
     }
 }
-
 // EOF

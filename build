@@ -11,7 +11,7 @@ case "$2" in
 b*)
     feat="blue_pill"
     tgt="thumbv7m-none-eabi"
-    chip="STM23F103C8"
+    chip="STM32F103C8"
     ;;
 n*)
     feat="nucleo_f411"
