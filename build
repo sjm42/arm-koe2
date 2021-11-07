@@ -3,7 +3,7 @@ set -e
 
 usage()
 {
-    echo "Usage: $0 <build | flash>  <bluepill | nucleo_f411>"
+    echo "Usage: $0 <build | clippy | flash>  <bluepill | nucleo_f411>"
     exit 1
 }
 
@@ -23,14 +23,19 @@ n*)
     ;;
 esac
 
+flags="--release --no-default-features --features $feat --target $tgt"
 case "$1" in
 b*)
     set -x
-    cargo build --release --no-default-features --features "$feat" --target $tgt
+    cargo build $flags
+    ;;
+c*)
+    set -x
+    cargo clippy $flags
     ;;
 f*)
     set -x
-    cargo flash --release --no-default-features --features "$feat" --target $tgt --chip $chip
+    cargo flash $flags --chip $chip
     ;;
 *)
     usage
