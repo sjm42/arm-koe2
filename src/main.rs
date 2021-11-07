@@ -5,27 +5,22 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 
-// use cortex_m::asm;
 use cortex_m_rt::entry;
 use panic_halt as _;
 
 // https://www.st.com/en/microcontrollers-microprocessors/stm32f103.html
 #[cfg(feature = "blue_pill")]
-use embedded_hal::digital::v2::OutputPin;
-#[cfg(feature = "blue_pill")]
-use hal::gpio::{IOPinSpeed, OutputSpeed};
-#[cfg(feature = "blue_pill")]
 use stm32f1xx_hal as hal;
 
 // https://www.st.com/en/microcontrollers-microprocessors/stm32f411re.html
 #[cfg(feature = "nucleo_f411")]
-use crate::hal::gpio::Speed;
-#[cfg(feature = "nucleo_f411")]
 use stm32f4xx_hal as hal;
 
-use crate::hal::{pac, prelude::*};
+#[cfg(feature = "nucleo_f411")]
+use crate::hal::gpio::Speed;
 
-// This is needed only for stm32f103 hal
+use crate::hal::{gpio::*, pac, prelude::*};
+use embedded_hal::digital::v2::OutputPin;
 
 #[entry]
 fn main() -> ! {
@@ -59,7 +54,7 @@ fn main() -> ! {
         let rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
 
-        led = pa.pa5.into_push_pull_output();
+        led = pa.pa5.into_push_pull_output().erase();
 
         // Create a delay abstraction based on SysTick
         delay = hal::delay::Delay::new(cp.SYST, &clocks);
@@ -85,31 +80,49 @@ fn main() -> ! {
         let mut flash = dp.FLASH.constrain();
         let clocks = rcc
             .cfgr
-            .use_hse(8.mhz())
-            .sysclk(36.mhz())
+            .use_hse(8.mhz()) // Use High Speed External 8Mhz crystal oscillator
+            .sysclk(72.mhz()) // Use the PLL to multiply SYSCLK to 72MHz
+            .hclk(72.mhz()) // Leave AHB prescaler at /1
+            .pclk1(36.mhz()) // Use the APB1 prescaler to divide the clock to 36MHz (max supported)
+            .pclk2(72.mhz()) // Leave the APB2 prescaler at /1
+            .adcclk(12.mhz()) // ADC prescaler of /6 (max speed of 14MHz, but /4 gives 18MHz)
             .freeze(&mut flash.acr);
 
-        led = pc.pc13.into_push_pull_output(&mut pc.crh);
+        // Configure gpio C pin 13 as a push-pull output. The `crh` register is passed to the function
+        // in order to configure the port. For pins 0-7, crl should be passed instead.
+        led = pc.pc13.into_push_pull_output(&mut pc.crh).downgrade();
+        // let led2 = pa.pa9.into_push_pull_output(&mut pa.crh).downgrade();
 
         // Create a delay abstraction based on SysTick
         delay = hal::delay::Delay::new(cp.SYST, clocks);
     }
 
     loop {
-        // On blue pill, LED is on with output low
-        #[cfg(feature = "blue_pill")]
-        let _ = led.set_low();
-        #[cfg(feature = "nucleo_f411")]
-        led.set_high();
-
+        setled(&mut led, true);
         delay.delay_ms(200_u32);
 
-        #[cfg(feature = "blue_pill")]
-        let _ = led.set_high();
-        #[cfg(feature = "nucleo_f411")]
-        led.set_low();
-
+        setled(&mut led, false);
         delay.delay_ms(800_u32);
     }
 }
+
+#[cfg(feature = "blue_pill")]
+fn setled(led: &mut Pxx<Output<PushPull>>, state: bool) {
+    // On blue pill, LED is on with output low
+    if state {
+        let _ = led.set_low();
+    } else {
+        let _ = led.set_high();
+    }
+}
+
+#[cfg(feature = "nucleo_f411")]
+fn setled(led: &mut dyn OutputPin<Error = core::convert::Infallible>, state: bool) {
+    if state {
+        let _ = led.set_high();
+    } else {
+        let _ = led.set_low();
+    }
+}
+
 // EOF

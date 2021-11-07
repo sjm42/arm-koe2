@@ -26,11 +26,11 @@ esac
 case "$1" in
 b*)
     set -x
-    cargo build --release --no-default-features --features $feat --target $tgt
+    cargo build --release --no-default-features --features "$feat" --target $tgt
     ;;
 f*)
     set -x
-    cargo flash --release --chip $chip
+    cargo flash --release --no-default-features --features "$feat" --target $tgt --chip $chip
     ;;
 *)
     usage

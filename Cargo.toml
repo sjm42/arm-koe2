@@ -6,8 +6,9 @@ name = "arm-koe2"
 version = "0.1.0"
 
 [features]
-# default = ["nucleo_f411"]
 default = ["blue_pill"]
+# default = ["nucleo_f411"]
+
 blue_pill = ["stm32f1xx-hal"]
 nucleo_f411 = ["stm32f4xx-hal"]
 
@@ -26,10 +27,10 @@ cortex-m = "0"
 cortex-m-rt = "0"
 cortex-m-semihosting = "0"
 embedded-hal = "0"
-nb = "1"
+# nb = "1"
 panic-halt = "0"
 
-alloc-cortex-m = "0"
+# alloc-cortex-m = "0"
 
 
 # this lets you use `cargo fix`!
