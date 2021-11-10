@@ -6,8 +6,8 @@ name = "arm-koe2"
 version = "0.1.0"
 
 [features]
-default = ["blue_pill"]
-# default = ["nucleo_f411"]
+# default = ["blue_pill"]
+default = ["nucleo_f411"]
 
 blue_pill = ["stm32f1xx-hal"]
 nucleo_f411 = ["stm32f4xx-hal"]

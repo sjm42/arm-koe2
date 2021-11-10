@@ -27,12 +27,12 @@ fn main() -> ! {
     let (mut led, mut delay) = init();
 
     loop {
-        for _i in 1..=3 {
+        for _i in 1..=4 {
             set_led(&mut led, true);
             delay.delay_ms(100_u32);
 
             set_led(&mut led, false);
-            delay.delay_ms(900_u32);
+            delay.delay_ms(400_u32);
         }
         delay.delay_ms(1000_u32);
     }
