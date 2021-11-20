@@ -27,7 +27,7 @@ fn main() -> ! {
     let (mut led, mut delay) = init();
 
     loop {
-        for _i in 1..=4 {
+        for _i in 1..=3 {
             set_led(&mut led, true);
             delay.delay_ms(100_u32);
 
