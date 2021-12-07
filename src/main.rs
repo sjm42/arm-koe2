@@ -12,6 +12,9 @@ use panic_halt as _;
 #[cfg(feature = "blue_pill")]
 use stm32f1xx_hal as hal;
 
+#[cfg(feature = "black_pill")]
+use stm32f4xx_hal as hal;
+
 // https://www.st.com/en/microcontrollers-microprocessors/stm32f411re.html
 #[cfg(feature = "nucleo_f411")]
 use stm32f4xx_hal as hal;
@@ -68,7 +71,7 @@ fn init() -> (Pxx<Output<PushPull>>, hal::delay::Delay) {
         .into_alternate_push_pull(&mut pa.crh)
         .set_speed(&mut pa.crh, IOPinSpeed::Mhz50);
 
-    // On blue pill stm32f103 user led is on PC13, active low
+    // On Bluepill stm32f103 user led is on PC13, active low
     // Configure gpio C pin 13 as a push-pull output. The `crh` register is passed to the function
     // in order to configure the port. For pins 0-7, crl should be passed instead.
     let led = pc.pc13.into_push_pull_output(&mut pc.crh).downgrade();
@@ -89,7 +92,7 @@ fn set_led(led: &mut Pxx<Output<PushPull>>, state: bool) {
     }
 }
 
-#[cfg(feature = "nucleo_f411")]
+#[cfg(any(feature = "nucleo_f411", feature = "black_pill"))]
 fn init() -> (ErasedPin<Output<PushPull>>, hal::delay::Delay) {
     let dp = pac::Peripherals::take().unwrap();
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
@@ -116,7 +119,12 @@ fn init() -> (ErasedPin<Output<PushPull>>, hal::delay::Delay) {
     let _mco2 = pc.pc9.into_alternate::<0>().set_speed(Speed::VeryHigh);
 
     // On Nucleo stm32f411 User led LD2 is on PA5, active high
+    #[cfg(feature = "nucleo_f411")]
     let led = pa.pa5.into_push_pull_output().erase();
+
+    // On Blackpill stm32f411 user led is on PC13, active low
+    #[cfg(feature = "black_pill")]
+    let led = pc.pc13.into_push_pull_output().erase();
 
     // Create a delay abstraction based on SysTick
     let delay = hal::delay::Delay::new(cp.SYST, &clocks);
@@ -124,9 +132,14 @@ fn init() -> (ErasedPin<Output<PushPull>>, hal::delay::Delay) {
     (led, delay)
 }
 
-#[cfg(feature = "nucleo_f411")]
+#[cfg(any(feature = "nucleo_f411", feature = "black_pill"))]
 fn set_led(led: &mut dyn OutputPin<Error = core::convert::Infallible>, state: bool) {
-    if state {
+    #[cfg(feature = "nucleo_f411")]
+    let active_low = false;
+    #[cfg(feature = "black_pill")]
+    let active_low = true;
+
+    if state ^ active_low {
         let _ = led.set_high();
     } else {
         let _ = led.set_low();
