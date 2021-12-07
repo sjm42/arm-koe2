@@ -12,6 +12,7 @@ use panic_halt as _;
 #[cfg(feature = "blue_pill")]
 use stm32f1xx_hal as hal;
 
+// https://www.st.com/en/microcontrollers-microprocessors/stm32f411ce.html
 #[cfg(feature = "black_pill")]
 use stm32f4xx_hal as hal;
 
