@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
-set -x
+#set -x
 
 usage()
 {
-    echo "Usage: $0 <bluepill | | blacKpill | nucleo_f411> <build | clippy | flash>"
+    echo "Usage: $0 <bluepill | | blacKpill | nucleo_f411> <build | clippy | flash | dfu>"
     exit 1
 }
 
@@ -13,11 +13,13 @@ blackpill|k*)
     feat="black_pill"
     tgt="thumbv7em-none-eabihf"
     chip="STM32F411CEUx"
+    dfu_opt="-a 0 -s 0x8000000"
     ;;
 b*)
     feat="blue_pill"
     tgt="thumbv7m-none-eabi"
     chip="STM32F103C8"
+    dfu_opt="-a 2 -s 0x8002000"
     ;;
 
 n*)
@@ -43,6 +45,15 @@ c*)
 f*)
     set -x
     cargo flash $flags --chip $chip
+    ;;
+d*)
+    set -x
+    cargo objcopy $flags -- -O binary target/out.bin
+    set +x
+    echo Boot the card in DFU mode and press Enter.
+    read
+    set -x
+    dfu-util $dfu_opt -D target/out.bin
     ;;
 *)
     usage
