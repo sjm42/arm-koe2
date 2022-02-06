@@ -31,6 +31,31 @@ use nrf52840_hal as hal;
 
 use crate::hal::{gpio::*, pac, prelude::*};
 
+trait IOPin {
+    fn high(&mut self);
+    fn low(&mut self);
+}
+
+#[cfg(feature = "nrf52840")]
+impl IOPin for Pin<Output<PushPull>> {
+    fn high(&mut self) {
+        self.set_high().ok();
+    }
+    fn low(&mut self) {
+        self.set_low().ok();
+    }
+}
+
+#[cfg(not(feature = "nrf52840"))]
+impl IOPin for ErasedPin<Output<PushPull>> {
+    fn high(&mut self) {
+        self.set_high();
+    }
+    fn low(&mut self) {
+        self.set_low();
+    }
+}
+
 #[entry]
 fn main() -> ! {
     let (mut led1, mut led2, mut delay) = init();
@@ -47,11 +72,7 @@ fn main() -> ! {
     }
 }
 
-fn init() -> (
-    Pin<Output<PushPull>>,
-    Option<[Pin<Output<PushPull>>; 3]>,
-    hal::delay::Delay,
-) {
+fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
     let dp = pac::Peripherals::take().unwrap();
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
 
@@ -70,11 +91,12 @@ fn init() -> (
         w
     });
     #[cfg(any(feature = "blue_pill", feature = "black_pill", feature = "nucleo_f411"))]
-    {
-        let rcc = dp.RCC.constrain();
-        let mut pa = dp.GPIOA.split();
-        let mut pc = dp.GPIOC.split();
-    }
+    let rcc = dp.RCC.constrain();
+    #[cfg(any(feature = "blue_pill", feature = "black_pill", feature = "nucleo_f411"))]
+    let mut pa = dp.GPIOA.split();
+    #[cfg(any(feature = "blue_pill", feature = "black_pill", feature = "nucleo_f411"))]
+    let mut pc = dp.GPIOC.split();
+
     #[cfg(feature = "blue_pill")]
     let mut flash = dp.FLASH.constrain();
 
@@ -126,12 +148,18 @@ fn init() -> (
     #[cfg(feature = "nucleo_f411")]
     let led1 = pa.pa5.into_push_pull_output().erase();
 
+    #[cfg(feature = "nrf52840")]
     let led1 = p0.p0_06.into_push_pull_output(Level::High).degrade();
+    #[cfg(feature = "nrf52840")]
     let led2 = Some([
         p0.p0_08.into_push_pull_output(Level::High).degrade(),
         p1.p1_09.into_push_pull_output(Level::High).degrade(),
         p0.p0_12.into_push_pull_output(Level::High).degrade(),
     ]);
+
+    // Sigh, keeping compiler happy with explicit type
+    #[cfg(not(feature = "nrf52840"))]
+    let led2: Option<[ErasedPin<Output<PushPull>>; 3]> = None;
 
     // Create a delay abstraction based on SysTick
     #[cfg(feature = "blue_pill")]
@@ -144,11 +172,7 @@ fn init() -> (
     (led1, led2, delay)
 }
 
-fn set_leds(
-    led1: &mut Pin<Output<PushPull>>,
-    led2: &mut Option<[Pin<Output<PushPull>>; 3]>,
-    state: bool,
-) {
+fn set_leds(led1: &mut impl IOPin, led2: &mut Option<[impl IOPin; 3]>, state: bool) {
     static mut CNT: usize = 0;
 
     #[cfg(any(feature = "black_pill", feature = "blue_pill", feature = "nrf52840"))]
@@ -157,15 +181,15 @@ fn set_leds(
     let active_low = false;
 
     if state ^ active_low {
-        let _ = led1.set_high();
+        let _ = led1.high();
         if let Some(l2) = led2 {
-            l2.iter_mut().for_each(|l| l.set_high().unwrap());
+            l2.iter_mut().for_each(|l| l.high());
         }
     } else {
-        let _ = led1.set_low();
+        let _ = led1.low();
         if let Some(l2) = led2 {
             let i = unsafe { CNT } % l2.len();
-            l2[i].set_low().ok();
+            l2[i].low();
             unsafe {
                 CNT += 1;
             }

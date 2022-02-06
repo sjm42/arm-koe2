@@ -2,14 +2,14 @@
 authors = ["Sami J. Mäkinen <sjm@iki.fi>"]
 edition = "2021"
 readme = "README.md"
-name = "stm32-test2"
+name = "cortex-m-test2"
 version = "0.1.0"
 
 [features]
-# default = ["blue_pill"]
+default = ["blue_pill"]
 # default = ["black_pill"]
 # default = ["nucleo_f411"]
-default = ["nrf52840"]
+# default = ["nrf52840"]
 
 blue_pill = ["stm32f1xx-hal"]
 black_pill = ["stm32f4xx-hal"]
@@ -40,7 +40,7 @@ panic-halt = "0"
 
 # this lets you use `cargo fix`!
 [[bin]]
-name = "stm32-test2"
+name = "cortex-m-test2"
 test = false
 bench = false
 

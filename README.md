@@ -1,2 +1,3 @@
-# stm32-test2
-STM32 test2
+# cortex-m-test2
+
+Cortex-M test2
