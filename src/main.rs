@@ -19,6 +19,8 @@ use panic_halt as _;
 // Nucleo f411
 // https://www.st.com/en/microcontrollers-microprocessors/stm32f411re.html
 //
+// nRF52840 Dongle
+// https://www.nordicsemi.com/Products/Development-hardware/nRF52840-Dongle
 
 #[cfg(feature = "blue_pill")]
 use stm32f1xx_hal as hal;
