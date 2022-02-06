@@ -14,15 +14,15 @@ use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
-    let mut memory_x = include_bytes!("memory.x").to_vec();
+    let mut memory_x = None;
     if let Some(_feature) = env::var_os("CARGO_FEATURE_BLUE_PILL") {
-        memory_x = include_bytes!("memory-blue_pill.x").to_vec();
-    }
-    if let Some(_feature) = env::var_os("CARGO_FEATURE_BLACK_PILL") {
-        memory_x = include_bytes!("memory-black_pill.x").to_vec();
-    }
-    if let Some(_feature) = env::var_os("CARGO_FEATURE_NUCLEO_F411") {
-        memory_x = include_bytes!("memory-nucleo_f411.x").to_vec();
+        memory_x = Some(include_bytes!("memory-blue_pill.x").to_vec());
+    } else if let Some(_feature) = env::var_os("CARGO_FEATURE_BLACK_PILL") {
+        memory_x = Some(include_bytes!("memory-black_pill.x").to_vec());
+    } else if let Some(_feature) = env::var_os("CARGO_FEATURE_NUCLEO_F411") {
+        memory_x = Some(include_bytes!("memory-nucleo_f411.x").to_vec());
+    } else if let Some(_feature) = env::var_os("CARGO_FEATURE_NRF52840") {
+        memory_x = Some(include_bytes!("memory-nrf52840.x").to_vec());
     }
 
     // Put `memory.x` in our output directory and ensure it's
@@ -30,13 +30,10 @@ fn main() {
     let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
     File::create(out.join("memory.x"))
         .unwrap()
-        .write_all(&memory_x)
+        .write_all(&memory_x.unwrap())
         .unwrap();
-    println!("cargo:rustc-link-search={}", out.display());
 
-    // By default, Cargo will re-run a build script whenever
-    // any file in the project changes. By specifying `memory.x`
-    // here, we ensure the build script is only re-run when
-    // `memory.x` is changed.
+    println!("cargo:rustc-link-search={}", out.display());
     println!("cargo:rerun-if-changed=memory.x");
+    println!("cargo:rerun-if-changed=build.rs");
 }

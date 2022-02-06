@@ -4,7 +4,7 @@ set -e
 
 usage()
 {
-    echo "Usage: $0 <bluepill | | blacKpill | nucleo_f411> <build | clippy | flash | dfu>"
+    echo "Usage: $0 <bluepill | | blacKpill | nucleo_f411 | nRf52840> <build | clippy | flash | dfu | nrfdfu>"
     exit 1
 }
 
@@ -27,6 +27,11 @@ n*)
     tgt="thumbv7em-none-eabihf"
     chip="STM32F411RETx"
     ;;
+r*)
+    feat="nrf52840"
+    tgt="thumbv7em-none-eabihf"
+    chip="NRF52840"
+    ;;
 *)
     usage
     ;;
@@ -47,6 +52,11 @@ f*)
     cargo flash $flags --chip $chip
     ;;
 d*)
+    if [ $feat = nrf52840 ]
+    then
+      echo Use nrfdfu with nRF52840, not dfu.
+      usage
+    fi
     set -x
     cargo objcopy $flags -- -O binary target/out.bin
     set +x
@@ -54,6 +64,10 @@ d*)
     read
     set -x
     dfu-util $dfu_opt -D target/out.bin
+    ;;
+n*)
+    set -x
+    nrfdfu target/$tgt/release/stm32-test2
     ;;
 *)
     usage

@@ -2,9 +2,8 @@
 
 #![no_std]
 #![no_main]
-#![deny(unsafe_code)]
 #![allow(unused_mut)]
-#![deny(warnings)]
+// #![deny(warnings)]
 
 use cortex_m_rt::entry;
 use panic_halt as _;
@@ -27,25 +26,32 @@ use stm32f1xx_hal as hal;
 #[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
 use stm32f4xx_hal as hal;
 
+#[cfg(feature = "nrf52840")]
+use nrf52840_hal as hal;
+
 use crate::hal::{gpio::*, pac, prelude::*};
 
 #[entry]
 fn main() -> ! {
-    let (mut led, mut delay) = init();
+    let (mut led1, mut led2, mut delay) = init();
 
     loop {
         for _i in 1..=3 {
-            set_led(&mut led, true);
+            set_leds(&mut led1, &mut led2, true);
             delay.delay_ms(100_u32);
 
-            set_led(&mut led, false);
+            set_leds(&mut led1, &mut led2, false);
             delay.delay_ms(400_u32);
         }
         delay.delay_ms(1000_u32);
     }
 }
 
-fn init() -> (ErasedPin<Output<PushPull>>, hal::delay::Delay) {
+fn init() -> (
+    Pin<Output<PushPull>>,
+    Option<[Pin<Output<PushPull>>; 3]>,
+    hal::delay::Delay,
+) {
     let dp = pac::Peripherals::take().unwrap();
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
 
@@ -63,12 +69,19 @@ fn init() -> (ErasedPin<Output<PushPull>>, hal::delay::Delay) {
         w.mco2().sysclk();
         w
     });
-
-    let rcc = dp.RCC.constrain();
-    let mut pa = dp.GPIOA.split();
-    let mut pc = dp.GPIOC.split();
+    #[cfg(any(feature = "blue_pill", feature = "black_pill", feature = "nucleo_f411"))]
+    {
+        let rcc = dp.RCC.constrain();
+        let mut pa = dp.GPIOA.split();
+        let mut pc = dp.GPIOC.split();
+    }
     #[cfg(feature = "blue_pill")]
     let mut flash = dp.FLASH.constrain();
+
+    #[cfg(feature = "nrf52840")]
+    let p0 = hal::gpio::p0::Parts::new(dp.P0);
+    #[cfg(feature = "nrf52840")]
+    let p1 = hal::gpio::p1::Parts::new(dp.P1);
 
     // Setup system clocks
     #[cfg(feature = "blue_pill")]
@@ -103,35 +116,60 @@ fn init() -> (ErasedPin<Output<PushPull>>, hal::delay::Delay) {
     // Configure gpio C pin 13 as a push-pull output. The `crh` register is passed to the function
     // in order to configure the port. For pins 0-7, crl should be passed instead.
     #[cfg(feature = "blue_pill")]
-    let led = pc.pc13.into_push_pull_output(&mut pc.crh).erase();
+    let led1 = pc.pc13.into_push_pull_output(&mut pc.crh).erase();
 
     // On Blackpill stm32f411 user led is on PC13, active low
     #[cfg(feature = "black_pill")]
-    let led = pc.pc13.into_push_pull_output().erase();
+    let led1 = pc.pc13.into_push_pull_output().erase();
 
     // On Nucleo stm32f411 User led LD2 is on PA5, active high
     #[cfg(feature = "nucleo_f411")]
-    let led = pa.pa5.into_push_pull_output().erase();
+    let led1 = pa.pa5.into_push_pull_output().erase();
+
+    let led1 = p0.p0_06.into_push_pull_output(Level::High).degrade();
+    let led2 = Some([
+        p0.p0_08.into_push_pull_output(Level::High).degrade(),
+        p1.p1_09.into_push_pull_output(Level::High).degrade(),
+        p0.p0_12.into_push_pull_output(Level::High).degrade(),
+    ]);
 
     // Create a delay abstraction based on SysTick
     #[cfg(feature = "blue_pill")]
     let delay = hal::delay::Delay::new(cp.SYST, clocks);
     #[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
     let delay = hal::delay::Delay::new(cp.SYST, &clocks);
+    #[cfg(feature = "nrf52840")]
+    let delay = hal::delay::Delay::new(cp.SYST);
 
-    (led, delay)
+    (led1, led2, delay)
 }
 
-fn set_led(led: &mut ErasedPin<Output<PushPull>>, state: bool) {
-    #[cfg(any(feature = "black_pill", feature = "blue_pill"))]
+fn set_leds(
+    led1: &mut Pin<Output<PushPull>>,
+    led2: &mut Option<[Pin<Output<PushPull>>; 3]>,
+    state: bool,
+) {
+    static mut CNT: usize = 0;
+
+    #[cfg(any(feature = "black_pill", feature = "blue_pill", feature = "nrf52840"))]
     let active_low = true;
     #[cfg(feature = "nucleo_f411")]
     let active_low = false;
 
     if state ^ active_low {
-        led.set_high();
+        let _ = led1.set_high();
+        if let Some(l2) = led2 {
+            l2.iter_mut().for_each(|l| l.set_high().unwrap());
+        }
     } else {
-        led.set_low();
+        let _ = led1.set_low();
+        if let Some(l2) = led2 {
+            let i = unsafe { CNT } % l2.len();
+            l2[i].set_low().ok();
+            unsafe {
+                CNT += 1;
+            }
+        }
     }
 }
 // EOF

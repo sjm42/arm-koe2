@@ -2,17 +2,19 @@
 authors = ["Sami J. Mäkinen <sjm@iki.fi>"]
 edition = "2021"
 readme = "README.md"
-name = "arm-koe2"
+name = "stm32-test2"
 version = "0.1.0"
 
 [features]
-default = ["blue_pill"]
+# default = ["blue_pill"]
 # default = ["black_pill"]
 # default = ["nucleo_f411"]
+default = ["nrf52840"]
 
 blue_pill = ["stm32f1xx-hal"]
 black_pill = ["stm32f4xx-hal"]
 nucleo_f411 = ["stm32f4xx-hal"]
+nrf52840 = ["nrf52840-hal"]
 
 [dependencies.stm32f1xx-hal]
 optional = true
@@ -24,6 +26,11 @@ optional = true
 version = "0"
 features = ["rt", "stm32f411"]
 
+[dependencies.nrf52840-hal]
+optional = true
+version = "0"
+features = ["rt"]
+
 [dependencies]
 cortex-m = "0"
 cortex-m-rt = "0"
@@ -33,7 +40,7 @@ panic-halt = "0"
 
 # this lets you use `cargo fix`!
 [[bin]]
-name = "arm-koe2"
+name = "stm32-test2"
 test = false
 bench = false
 
