@@ -1,6 +1,6 @@
 MEMORY
 {
-  /* for blue pill stm32f103 */
+  /* for stm32f103 */
   FLASH : ORIGIN = 0x08000000, LENGTH = 56K
   RAM   : ORIGIN = 0x20000000, LENGTH = 20K
 }

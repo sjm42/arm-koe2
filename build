@@ -4,33 +4,37 @@ set -e
 
 usage()
 {
-    echo "Usage: $0 <bluepill | | blacKpill | nucleo_f411 | nRf52840> <build | clippy | flash | dfu | nrfdfu>"
+    echo "Usage: $0 <Bluepill | blacKpill | Nucleo_f411 | nRf52840-dongle | nrf52840-Dk> <Build | Clippy | Flash | Dfu | Nrfdfu>"
     exit 1
 }
 
 case "$1" in
-blackpill|k*)
+K*|bla*|k*)
     feat="black_pill"
     tgt="thumbv7em-none-eabihf"
     chip="STM32F411CEUx"
     dfu_opt="-a 0 -s 0x8000000"
     ;;
-b*)
+B*|b*)
     feat="blue_pill"
     tgt="thumbv7m-none-eabi"
     chip="STM32F103C8"
     dfu_opt="-a 2 -s 0x8002000"
     ;;
-
-n*)
+N*|n*)
     feat="nucleo_f411"
     tgt="thumbv7em-none-eabihf"
     chip="STM32F411RETx"
     ;;
-r*)
-    feat="nrf52840"
+nR*|R*|r*)
+    feat="nrf52840_dongle"
     tgt="thumbv7em-none-eabihf"
-    chip="NRF52840"
+    chip="nRF52840_xxAA"
+    ;;
+D*|d*)
+    feat="nrf52840_dk"
+    tgt="thumbv7em-none-eabihf"
+    chip="nRF52840_xxAA"
     ;;
 *)
     usage
@@ -39,19 +43,19 @@ esac
 
 flags="--release --no-default-features --features $feat --target $tgt"
 case "$2" in
-b*)
+B*|b*)
     set -x
     cargo build $flags
     ;;
-c*)
+C*|c*)
     set -x
     cargo clippy $flags
     ;;
-f*)
+F*|f*)
     set -x
     cargo flash $flags --chip $chip
     ;;
-d*)
+D*|d*)
     if [ $feat = nrf52840 ]
     then
       echo Use nrfdfu with nRF52840, not dfu.
@@ -65,7 +69,7 @@ d*)
     set -x
     dfu-util $dfu_opt -D target/out.bin
     ;;
-n*)
+N*|n*)
     set -x
     nrfdfu target/$tgt/release/stm32-test2
     ;;

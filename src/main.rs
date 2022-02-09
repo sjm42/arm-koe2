@@ -19,13 +19,16 @@ use panic_halt as _;
 // Nucleo f411
 // https://www.st.com/en/microcontrollers-microprocessors/stm32f411re.html
 //
-// nRF52840 Dongle
+// nRF52840-Dongle
 // https://www.nordicsemi.com/Products/Development-hardware/nRF52840-Dongle
+//
+// nRF52840-DK
+// https://www.nordicsemi.com/Products/Development-hardware/nRF52840-DK
 
-#[cfg(feature = "blue_pill")]
+#[cfg(feature = "stm32f103")]
 use stm32f1xx_hal as hal;
 
-#[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
+#[cfg(feature = "stm32f411")]
 use stm32f4xx_hal as hal;
 
 #[cfg(feature = "nrf52840")]
@@ -38,6 +41,16 @@ trait IOPin {
     fn low(&mut self);
 }
 
+#[cfg(any(feature = "stm32f103", feature = "stm32f411"))]
+impl IOPin for ErasedPin<Output<PushPull>> {
+    fn high(&mut self) {
+        self.set_high();
+    }
+    fn low(&mut self) {
+        self.set_low();
+    }
+}
+
 #[cfg(feature = "nrf52840")]
 impl IOPin for Pin<Output<PushPull>> {
     fn high(&mut self) {
@@ -45,16 +58,6 @@ impl IOPin for Pin<Output<PushPull>> {
     }
     fn low(&mut self) {
         self.set_low().ok();
-    }
-}
-
-#[cfg(not(feature = "nrf52840"))]
-impl IOPin for ErasedPin<Output<PushPull>> {
-    fn high(&mut self) {
-        self.set_high();
-    }
-    fn low(&mut self) {
-        self.set_low();
     }
 }
 
@@ -84,7 +87,7 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
 
     // Enable clock outputs 1+2
     // With 100MHz sysclk we should see 8/5 = 1.6 MHz on MCO1 and 100/5 = 20MHz on MCO2
-    #[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(feature = "stm32f411")]
     dp.RCC.cfgr.modify(|_r, w| {
         w.mco1pre().div5();
         w.mco1().hsi();
@@ -92,23 +95,23 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
         w.mco2().sysclk();
         w
     });
-    #[cfg(any(feature = "blue_pill", feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(any(feature = "stm32f103", feature = "stm32f411"))]
     let rcc = dp.RCC.constrain();
-    #[cfg(any(feature = "blue_pill", feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(any(feature = "stm32f103", feature = "stm32f411"))]
     let mut pa = dp.GPIOA.split();
-    #[cfg(any(feature = "blue_pill", feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(any(feature = "stm32f103", feature = "stm32f411"))]
     let mut pc = dp.GPIOC.split();
 
-    #[cfg(feature = "blue_pill")]
+    #[cfg(feature = "stm32f103")]
     let mut flash = dp.FLASH.constrain();
 
     #[cfg(feature = "nrf52840")]
     let p0 = hal::gpio::p0::Parts::new(dp.P0);
-    #[cfg(feature = "nrf52840")]
+    #[cfg(feature = "nrf52840_dongle")]
     let p1 = hal::gpio::p1::Parts::new(dp.P1);
 
     // Setup system clocks
-    #[cfg(feature = "blue_pill")]
+    #[cfg(feature = "stm32f103")]
     let clocks = rcc
         .cfgr
         .use_hse(8.mhz()) // Use High Speed External 8Mhz crystal oscillator
@@ -120,20 +123,20 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
         .freeze(&mut flash.acr);
 
     // Setup system clock to 100 MHz
-    #[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(feature = "stm32f411")]
     let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
 
     // Clock outputs is alt function on MCO=PA8
-    #[cfg(feature = "blue_pill")]
+    #[cfg(feature = "stm32f103")]
     let _mco = pa
         .pa8
         .into_alternate_push_pull(&mut pa.crh)
         .set_speed(&mut pa.crh, IOPinSpeed::Mhz50);
 
     // Clock outputs are as alt functions on MCO1=PA8, MCO2=PC9
-    #[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(feature = "stm32f411")]
     let _mco1 = pa.pa8.into_alternate::<0>().set_speed(Speed::VeryHigh);
-    #[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(feature = "stm32f411")]
     let _mco2 = pc.pc9.into_alternate::<0>().set_speed(Speed::VeryHigh);
 
     // On Bluepill stm32f103 user led is on PC13, active low
@@ -150,23 +153,32 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
     #[cfg(feature = "nucleo_f411")]
     let led1 = pa.pa5.into_push_pull_output().erase();
 
-    #[cfg(feature = "nrf52840")]
+    #[cfg(feature = "nrf52840_dongle")]
     let led1 = p0.p0_06.into_push_pull_output(Level::High).degrade();
-    #[cfg(feature = "nrf52840")]
+    #[cfg(feature = "nrf52840_dk")]
+    let led1 = p0.p0_13.into_push_pull_output(Level::High).degrade();
+
+    #[cfg(feature = "nrf52840_dongle")]
     let led2 = Some([
         p0.p0_08.into_push_pull_output(Level::High).degrade(),
         p1.p1_09.into_push_pull_output(Level::High).degrade(),
         p0.p0_12.into_push_pull_output(Level::High).degrade(),
     ]);
+    #[cfg(feature = "nrf52840_dk")]
+    let led2 = Some([
+        p0.p0_14.into_push_pull_output(Level::High).degrade(),
+        p0.p0_15.into_push_pull_output(Level::High).degrade(),
+        p0.p0_16.into_push_pull_output(Level::High).degrade(),
+    ]);
 
     // Sigh, keeping compiler happy with explicit type
-    #[cfg(not(feature = "nrf52840"))]
+    #[cfg(any(feature = "stm32f103", feature = "stm32f411"))]
     let led2: Option<[ErasedPin<Output<PushPull>>; 3]> = None;
 
     // Create a delay abstraction based on SysTick
-    #[cfg(feature = "blue_pill")]
+    #[cfg(feature = "stm32f103")]
     let delay = hal::delay::Delay::new(cp.SYST, clocks);
-    #[cfg(any(feature = "black_pill", feature = "nucleo_f411"))]
+    #[cfg(feature = "stm32f411")]
     let delay = hal::delay::Delay::new(cp.SYST, &clocks);
     #[cfg(feature = "nrf52840")]
     let delay = hal::delay::Delay::new(cp.SYST);
