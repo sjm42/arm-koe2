@@ -71,7 +71,7 @@ D*|d*)
     ;;
 N*|n*)
     set -x
-    nrfdfu target/$tgt/release/stm32-test2
+    nrfdfu target/$tgt/release/cortex-m-test2
     ;;
 *)
     usage
