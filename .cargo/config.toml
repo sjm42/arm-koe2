@@ -32,10 +32,10 @@ rustflags = [
 # Pick ONE of these compilation targets
 # target = "thumbv6m-none-eabi"        # Cortex-M0 and Cortex-M0+
 
-# Blue pill with stm32f103
+# stm32f1xx
 target = "thumbv7m-none-eabi" # Cortex-M3
 
-# nucleo F411
+# stm32f4xx & nRF528xx
 # target = "thumbv7em-none-eabihf" # Cortex-M4F and Cortex-M7F (with FPU)
 
 # target = "thumbv7em-none-eabi"       # Cortex-M4 and Cortex-M7 (no FPU)
