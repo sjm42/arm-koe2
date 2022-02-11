@@ -123,8 +123,14 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
         .freeze(&mut flash.acr);
 
     // Setup system clock to 100 MHz
-    #[cfg(feature = "stm32f411")]
+    #[cfg(feature = "nucleo_f411")]
+    // default, internal rc osc
     let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
+    // for external xtal, use:
+    // let clocks = rcc.cfgr.use_hse(8.mhz()).sysclk(100.mhz()).freeze();
+
+    #[cfg(feature = "black_pill")]
+    let clocks = rcc.cfgr.use_hse(25.mhz()).sysclk(100.mhz()).freeze();
 
     // Clock outputs is alt function on MCO=PA8
     #[cfg(feature = "stm32f103")]
