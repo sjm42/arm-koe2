@@ -82,7 +82,7 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
 
     // Enable clock output MCO
-    #[cfg(feature = "blue_pill")]
+    #[cfg(feature = "stm32f103")]
     dp.RCC.cfgr.modify(|_r, w| w.mco().sysclk());
 
     // Enable clock outputs 1+2
