@@ -9,8 +9,8 @@ version = "0.1.0"
 stm32f103 = []
 stm32f411 = []
 nrf52840 = []
-default = ["blue_pill"]
-# default = ["black_pill"]
+# default = ["blue_pill"]
+default = ["black_pill"]
 # default = ["nucleo_f411"]
 # default = ["nrf52840_dongle"]
 # default = ["nrf52840_dk"]
@@ -28,7 +28,7 @@ features = ["rt", "stm32f103"]
 
 [dependencies.stm32f4xx-hal]
 optional = true
-version = "0"
+version = "0.11.1"
 features = ["rt", "stm32f411"]
 
 [dependencies.nrf52840-hal]
