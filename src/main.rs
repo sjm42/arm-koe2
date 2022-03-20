@@ -35,6 +35,7 @@ use stm32f4xx_hal as hal;
 use nrf52840_hal as hal;
 
 use crate::hal::{gpio::*, pac, prelude::*};
+use embedded_hal::blocking::delay::*;
 
 trait IOPin {
     fn high(&mut self);
@@ -68,16 +69,16 @@ fn main() -> ! {
     loop {
         for _i in 1..=3 {
             set_leds(&mut led1, &mut led2, true);
-            delay.delay_ms(100_u32);
+            delay.delay_ms(100);
 
             set_leds(&mut led1, &mut led2, false);
-            delay.delay_ms(400_u32);
+            delay.delay_ms(400);
         }
-        delay.delay_ms(1000_u32);
+        delay.delay_ms(1000);
     }
 }
 
-fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
+fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, impl DelayMs<u16>) {
     let dp = pac::Peripherals::take().unwrap();
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
 
@@ -114,23 +115,23 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
     #[cfg(feature = "stm32f103")]
     let clocks = rcc
         .cfgr
-        .use_hse(8.mhz()) // Use High Speed External 8Mhz crystal oscillator
-        .sysclk(72.mhz()) // Use the PLL to multiply SYSCLK to 72MHz
-        .hclk(72.mhz()) // Leave AHB prescaler at /1
-        .pclk1(36.mhz()) // Use the APB1 prescaler to divide the clock to 36MHz (max supported)
-        .pclk2(72.mhz()) // Leave the APB2 prescaler at /1
-        .adcclk(12.mhz()) // ADC prescaler of /6 (max speed of 14MHz, but /4 gives 18MHz)
+        .use_hse(8.MHz()) // Use High Speed External 8Mhz crystal oscillator
+        .sysclk(72.MHz()) // Use the PLL to multiply SYSCLK to 72MHz
+        .hclk(72.MHz()) // Leave AHB prescaler at /1
+        .pclk1(36.MHz()) // Use the APB1 prescaler to divide the clock to 36MHz (max supported)
+        .pclk2(72.MHz()) // Leave the APB2 prescaler at /1
+        .adcclk(12.MHz()) // ADC prescaler of /6 (max speed of 14MHz, but /4 gives 18MHz)
         .freeze(&mut flash.acr);
 
     // Setup system clock to 100 MHz
     #[cfg(feature = "nucleo_f411")]
     // default, internal rc osc
-    let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
+    let clocks = rcc.cfgr.sysclk(100.MHz()).freeze();
     // for external xtal, use:
-    // let clocks = rcc.cfgr.use_hse(8.mhz()).sysclk(100.mhz()).freeze();
+    // let clocks = rcc.cfgr.use_hse(8.MHz()).sysclk(100.MHz()).freeze();
 
     #[cfg(feature = "black_pill")]
-    let clocks = rcc.cfgr.use_hse(25.mhz()).sysclk(100.mhz()).freeze();
+    let clocks = rcc.cfgr.use_hse(25.MHz()).sysclk(100.MHz()).freeze();
 
     // Clock outputs is alt function on MCO=PA8
     #[cfg(feature = "stm32f103")]
@@ -183,9 +184,9 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, hal::delay::Delay) {
 
     // Create a delay abstraction based on SysTick
     #[cfg(feature = "stm32f103")]
-    let delay = hal::delay::Delay::new(cp.SYST, clocks);
+    let delay = hal::timer::Timer::syst(cp.SYST, &clocks).delay();
     #[cfg(feature = "stm32f411")]
-    let delay = hal::delay::Delay::new(cp.SYST, &clocks);
+    let delay = hal::timer::Timer::syst(cp.SYST, &clocks).delay();
     #[cfg(feature = "nrf52840")]
     let delay = hal::delay::Delay::new(cp.SYST);
 

@@ -23,17 +23,17 @@ nrf52840_dk = ["nrf52840", "nrf52840-hal"]
 
 [dependencies.stm32f1xx-hal]
 optional = true
-version = "0.8"
+version = "0.9"
 features = ["rt", "stm32f103"]
 
 [dependencies.stm32f4xx-hal]
 optional = true
-version = "0.11.1"
+version = "0.12"
 features = ["rt", "stm32f411"]
 
 [dependencies.nrf52840-hal]
 optional = true
-version = "0"
+version = "0.15"
 features = ["rt"]
 
 [dependencies]
