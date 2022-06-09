@@ -28,19 +28,19 @@ features = ["rt", "stm32f103"]
 
 [dependencies.stm32f4xx-hal]
 optional = true
-version = "0.12"
+version = "0.13.2"
 features = ["rt", "stm32f411"]
 
 [dependencies.nrf52840-hal]
 optional = true
-version = "0.15"
+version = "0.15.1"
 features = ["rt"]
 
 [dependencies]
-cortex-m = "0"
-cortex-m-rt = "0"
-embedded-hal = "0"
-panic-halt = "0"
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+embedded-hal = "0.2"
+panic-halt = "0.2"
 
 
 # this lets you use `cargo fix`!
