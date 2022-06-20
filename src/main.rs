@@ -96,6 +96,7 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, impl DelayMs<u16>) {
         w.mco2().sysclk();
         w
     });
+
     #[cfg(any(feature = "stm32f103", feature = "stm32f411"))]
     let rcc = dp.RCC.constrain();
     #[cfg(any(feature = "stm32f103", feature = "stm32f411"))]
@@ -135,16 +136,15 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, impl DelayMs<u16>) {
 
     // Clock outputs is alt function on MCO=PA8
     #[cfg(feature = "stm32f103")]
-    let _mco = pa
-        .pa8
+    pa.pa8
         .into_alternate_push_pull(&mut pa.crh)
         .set_speed(&mut pa.crh, IOPinSpeed::Mhz50);
 
     // Clock outputs are as alt functions on MCO1=PA8, MCO2=PC9
     #[cfg(feature = "stm32f411")]
-    let _mco1 = pa.pa8.into_alternate::<0>().set_speed(Speed::VeryHigh);
+    pa.pa8.into_alternate::<0>().set_speed(Speed::VeryHigh);
     #[cfg(feature = "stm32f411")]
-    let _mco2 = pc.pc9.into_alternate::<0>().set_speed(Speed::VeryHigh);
+    pc.pc9.into_alternate::<0>().set_speed(Speed::VeryHigh);
 
     // On Bluepill stm32f103 user led is on PC13, active low
     // Configure gpio C pin 13 as a push-pull output. The `crh` register is passed to the function
@@ -202,12 +202,12 @@ fn set_leds(led1: &mut impl IOPin, led2: &mut Option<[impl IOPin; 3]>, state: bo
     let active_low = false;
 
     if state ^ active_low {
-        let _ = led1.high();
+        led1.high();
         if let Some(l2) = led2 {
             l2.iter_mut().for_each(|l| l.high());
         }
     } else {
-        let _ = led1.low();
+        led1.low();
         if let Some(l2) = led2 {
             let i = unsafe { CNT } % l2.len();
             l2[i].low();
