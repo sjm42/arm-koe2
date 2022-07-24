@@ -63,9 +63,9 @@ dependencies = [
 
 [[package]]
 name = "bytemuck"
-version = "1.10.0"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c53dfa917ec274df8ed3c572698f381a24eef2efba9492d797301b72b6db408a"
+checksum = "a5377c8865e74a160d21f29c2d40669f53286db6eab59b88540cbb12ffc8b835"
 
 [[package]]
 name = "cast"
@@ -178,9 +178,9 @@ checksum = "156d7a2fdd98ebbf9ae579cbceca3058cff946e13f8e17b90e3511db0508c723"
 
 [[package]]
 name = "fixed"
-version = "1.16.0"
+version = "1.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93db1ca4ef0496cc54f43660fcb423bc16ced939b8fdd9749e7abcd5674f1803"
+checksum = "1e50e12d082af9f49314ae850d33c7e89bbe1b3f30857f747f7bed0750b068c5"
 dependencies = [
  "az",
  "bytemuck",
