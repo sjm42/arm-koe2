@@ -109,7 +109,7 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, impl DelayMs<u16>) {
 
     #[cfg(feature = "nrf52840")]
     let p0 = hal::gpio::p0::Parts::new(dp.P0);
-    #[cfg(feature = "nrf52840_dongle")]
+    #[cfg(any(feature = "nrf52840_dongle", feature = "nrf52840_dongle_sd"))]
     let p1 = hal::gpio::p1::Parts::new(dp.P1);
 
     // Setup system clocks
@@ -160,12 +160,12 @@ fn init() -> (impl IOPin, Option<[impl IOPin; 3]>, impl DelayMs<u16>) {
     #[cfg(feature = "nucleo_f411")]
     let led1 = pa.pa5.into_push_pull_output().erase();
 
-    #[cfg(feature = "nrf52840_dongle")]
+    #[cfg(any(feature = "nrf52840_dongle", feature = "nrf52840_dongle_sd"))]
     let led1 = p0.p0_06.into_push_pull_output(Level::High).degrade();
     #[cfg(feature = "nrf52840_dk")]
     let led1 = p0.p0_13.into_push_pull_output(Level::High).degrade();
 
-    #[cfg(feature = "nrf52840_dongle")]
+    #[cfg(any(feature = "nrf52840_dongle", feature = "nrf52840_dongle_sd"))]
     let led2 = Some([
         p0.p0_08.into_push_pull_output(Level::High).degrade(),
         p1.p1_09.into_push_pull_output(Level::High).degrade(),

@@ -21,6 +21,8 @@ fn main() {
         memory_x = Some(include_bytes!("memory-stm32f411.x").to_vec());
     } else if let Some(_feature) = env::var_os("CARGO_FEATURE_NRF52840_DONGLE") {
         memory_x = Some(include_bytes!("memory-nrf52840-dongle.x").to_vec());
+    } else if let Some(_feature) = env::var_os("CARGO_FEATURE_NRF52840_DONGLE_SD") {
+        memory_x = Some(include_bytes!("memory-nrf52840-dongle-sd.x").to_vec());
     } else if let Some(_feature) = env::var_os("CARGO_FEATURE_NRF52840_DK") {
         memory_x = Some(include_bytes!("memory-nrf52840-dk.x").to_vec());
     }

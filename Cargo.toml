@@ -13,13 +13,15 @@ nrf52840 = []
 # default = ["blue_pill"]
 # default = ["black_pill"]
 # default = ["nucleo_f411"]
-default = ["nrf52840_dongle"]
+# default = ["nrf52840_dongle"]
+default = ["nrf52840_dongle_sd"]
 # default = ["nrf52840_dk"]
 
 blue_pill = ["stm32f103", "stm32f1xx-hal"]
 black_pill = ["stm32f411", "stm32f4xx-hal"]
 nucleo_f411 = ["stm32f411", "stm32f4xx-hal"]
 nrf52840_dongle = ["nrf52840", "nrf52840-hal"]
+nrf52840_dongle_sd = ["nrf52840", "nrf52840-hal"]
 nrf52840_dk = ["nrf52840", "nrf52840-hal"]
 
 
@@ -35,7 +37,7 @@ features = ["rt", "stm32f411"]
 
 [dependencies.nrf52840-hal]
 optional = true
-version = "0.15"
+version = "0.16"
 features = ["rt"]
 
 [dependencies]
