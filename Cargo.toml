@@ -1,9 +1,12 @@
+# Cargo.toml
+
 [package]
 authors = ["Sami J. Mäkinen <sjm@iki.fi>"]
 edition = "2021"
 readme = "README.md"
 name = "cortex-m-test2"
-version = "0.1.2"
+version = "0.1.3"
+
 
 [features]
 stm32f103 = []
@@ -13,26 +16,27 @@ nrf52840 = []
 # default = ["blue_pill"]
 # default = ["black_pill"]
 # default = ["nucleo_f411"]
+# default = ["nrf52840_dk"]
 # default = ["nrf52840_dongle"]
 default = ["nrf52840_dongle_sd"]
-# default = ["nrf52840_dk"]
+
 
 blue_pill = ["stm32f103", "stm32f1xx-hal"]
 black_pill = ["stm32f411", "stm32f4xx-hal"]
 nucleo_f411 = ["stm32f411", "stm32f4xx-hal"]
+nrf52840_dk = ["nrf52840", "nrf52840-hal"]
 nrf52840_dongle = ["nrf52840", "nrf52840-hal"]
 nrf52840_dongle_sd = ["nrf52840", "nrf52840-hal"]
-nrf52840_dk = ["nrf52840", "nrf52840-hal"]
 
 
 [dependencies.stm32f1xx-hal]
 optional = true
-version = "0.9"
+version = "0.10"
 features = ["rt", "stm32f103"]
 
 [dependencies.stm32f4xx-hal]
 optional = true
-version = "0.13"
+version = "0.14"
 features = ["rt", "stm32f411"]
 
 [dependencies.nrf52840-hal]
@@ -40,17 +44,20 @@ optional = true
 version = "0.16"
 features = ["rt"]
 
+
 [dependencies]
 cortex-m = "0.7"
 cortex-m-rt = "0.7"
 embedded-hal = "0.2"
 panic-halt = "0.2"
 
+
 # this lets you use `cargo fix`!
 [[bin]]
 name = "cortex-m-test2"
 test = false
 bench = false
+
 
 [profile.release]
 opt-level = 'z'
