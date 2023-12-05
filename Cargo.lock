@@ -167,9 +167,9 @@ checksum = "723dce4e9f25b6e6c5f35628e144794e5b459216ed7da97b7c4b66cdb3fa82ca"
 
 [[package]]
 name = "embedded-storage"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "156d7a2fdd98ebbf9ae579cbceca3058cff946e13f8e17b90e3511db0508c723"
+checksum = "a21dea9854beb860f3062d10228ce9b976da520a73474aed3171ec276bc0c032"
 
 [[package]]
 name = "fixed"
@@ -244,7 +244,7 @@ dependencies = [
  "cortex-m",
  "embedded-dma",
  "embedded-hal 0.2.7",
- "embedded-storage 0.3.0",
+ "embedded-storage 0.3.1",
  "fixed",
  "nb 1.1.0",
  "nrf-usbd",
